@@ -1,0 +1,344 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Keypoints detection in Human Pose Estimation</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-06-14"><meta name="DC.source" content="trainModel.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Keypoints detection in Human Pose Estimation</h1><!--introduction--><p>This example demonstrates how to train and test a ConvNet to detect body keypoints from a single image. It is assumed that the individual is roughly localized.</p><p>There is a demo code at <b>examples/testModel.m</b> for testing a pretrained model for 2D human pose estimation. In addition, there are a few testing examples at the folder <b>examples/img</b>. To run the demo, execute the scrpit <b>examples/testModel.m</b>. The pretrained model is an implementation of the Fusion network from Pfister et al. (<a href="http://arxiv.org/abs/1506.02897">http://arxiv.org/abs/1506.02897</a>, ICCV2015).</p><p>To train a model, the main execution scrpit is <b>examples/trainModel.m</b>. One should first download the traind and validation data (link will be provided soon) and then compile MatConvNet. MatConvNet is already included in this project. Instructions for compiling the library can be found <a href="http://www.vlfeat.org/matconvnet/install/#compiling">here</a>. It is highly recommended to compile the library with the support of GPU (cuda and cudnn). For example, compiling the library with the support of the aforementioned functionalities can be done with the command:</p><p>vl_compilenn('enableGpu', true, 'cudaMethod', 'nvcc', 'EnableImreadJpeg', true, 'cudaRoot', '/usr/local/cuda-7.5', 'enableCudnn', true, 'cudnnRoot', '/home/vb/code/cudnn-v4');</p><p>To run the command, you should incidate the filepath of <b>cudaRoot</b> and <b>cudnnRoot</b>. Moreover, the function <b>vl_compilenn()</b> is inside the folder <b>matlab</b>.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Dataset</a></li><li><a href="#2">Setup matconvnet</a></li><li><a href="#3">Storage Directories</a></li><li><a href="#4">Parameters (adjustable)</a></li><li><a href="#5">Parameters (fixed)</a></li><li><a href="#6">Build the network</a></li><li><a href="#7">More parameters (fixed)</a></li><li><a href="#8">Heatmap Regressor</a></li><li><a href="#9">Different Example</a></li><li><a href="#10">Contact and Support</a></li></ul></div><h2>Dataset<a name="1"></a></h2><p>Training and validation data will be available soon.</p><p>Check the structure of the traind and validation files (<b>dataset/Train.mat</b> and <b>dataset/Validation.mat</b>) to see the ground-truth format. The <b>2D coordinates</b> and the keypoints <b>visibility</b> are provided for each sample. When there is ground-truth for multiple individuals, it is store in the third dimension (e.g. ground-truth for 3 individuals will be stores in a 16x3x3 tensor).</p><p>Storage files:</p><div><ol><li>After downloading the train and validation files, update the <b>opts.DataMatTrain</b> and <b>opts.DataMatVal</b> variables with the files (e.g. lsp_dataset/Train.mat and lsp_dataset/Validation.mat).</li><li>When executing the main script, the train and validation files will be loaded to generate the image database. Specify where to store the image database in <b>opts.imdbPath</b> in advance (the default path is the <b>lsp_dataset</b> folder).</li><li>The directory to export the learned model should be provided in <b>opts.expDir</b> (the default path is the <b>lsp_dataset/model</b> folder). Notice that a learned model is stored at the end of every epoch. This means that restarting the training from scratch requires to empty the <b>opts.expDir</b> folder from previously store files.</li></ol></div><p>When the data is dowloaded and preprocessed, training a model can start by executing <b>examples/trainModel.m</b>.</p><p>The rest of the documentation describes the main training script (<b>examples/trainModel.m</b>.).</p><h2>Setup matconvnet<a name="2"></a></h2><pre class="codeinput">clearvars; close <span class="string">all</span>; clc;
+addpath(<span class="string">'utils'</span>);
+run(fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)),<span class="keyword">...</span>
+  <span class="string">'..'</span>, <span class="string">'matlab'</span>, <span class="string">'vl_setupnn.m'</span>)) ;
+</pre><h2>Storage Directories<a name="3"></a></h2><pre class="codeinput"><span class="comment">% Train / Validation files (downloaded files)</span>
+opts.DataMatTrain=<span class="string">'dataset/Train.mat'</span>;
+opts.DataMatVal=<span class="string">'dataset/Validation.mat'</span>;
+
+<span class="comment">% Export folder</span>
+opts.expDir = <span class="string">'dataset/model'</span>;
+
+<span class="comment">% Image database file (it is generated at the beginning of the training)</span>
+opts.imdbPath = <span class="string">'dataset/imdb.mat'</span>;
+</pre><h2>Parameters (adjustable)<a name="4"></a></h2><p>This parameters can be changed, although it is not recommended for this example.</p><pre class="codeinput"><span class="comment">% Dataset name (used only for naming - not important)</span>
+opts.datas=<span class="string">'Key'</span>;
+
+<span class="comment">% Input to the network (different from input image)</span>
+opts.patchHei=248;
+opts.patchWi=248;
+
+<span class="comment">% Imporant parameter for data augmentation (flip), extra clarification follows next.</span>
+opts.flipFlg=<span class="string">'mpi'</span>;
+
+<span class="comment">% Batch size (should change only in case of memory problems)</span>
+opts.batchSize = 20;
+
+<span class="comment">% Compensates for small batch size(if batchSize=10, then set to 2)</span>
+opts.numSubBatches = 1;
+
+<span class="comment">% Number of training epochs (after 30 epochs, it could be stopped)</span>
+opts.numEpochs = 30 ;
+
+<span class="comment">% Learning rate (e.g. 20 epochs 10^-5, then 30 epochs 10^-6 - it is not recommended to change it)</span>
+opts.learningRate = [0.00001*ones(1, 20) 0.000001*ones(1, 30)] ;
+
+<span class="comment">%GPU index (if empy, CPU training)</span>
+opts.gpus = [1];
+</pre><h2>Parameters (fixed)<a name="5"></a></h2><pre class="codeinput">opts.useBnorm = false;
+opts.bord=[];
+opts.NoAug=1; <span class="comment">%used for calling the proper imdb creation function</span>
+opts.prefetch = false ;
+opts.outNode=16;<span class="comment">%if heatmaps loss, then number of heatmaps</span>
+opts.inNode=3;
+opts.lossFunc=<span class="string">'l2loss-heatmap'</span>;
+opts.batchNormalization = 1;<span class="comment">%useful for big networks</span>
+</pre><h2>Build the network<a name="6"></a></h2><p>The network is build separately. It's imporant to specify correctly the number of heatmaps (i.e. keypoints). This is done with <b>opts.outNode</b>. In this example, it is fixed to 16 heatmaps - keipoints.</p><pre class="codeinput">net = initializeSpatialFusionNetwork(opts);
+</pre><h2>More parameters (fixed)<a name="7"></a></h2><pre class="codeinput"><span class="comment">% Objectives for backpropagation</span>
+opts.derOutputs = {<span class="string">'objective'</span>, 1,<span class="string">'objective2'</span>, 1};
+
+<span class="comment">% Transformation to go from the input image to the heatmap space (only scale transformation, not to be changed)</span>
+trf=[0.25 0 0 ; 0 0.25 0; 0 0 1];
+
+<span class="comment">% Parameters for the train scrpit</span>
+opts.net=net;
+opts.numThreads = 15;
+opts.transformation = <span class="string">'f25'</span> ;
+opts.averageImage = single(repmat(128,1,1,opts.inNode));
+opts.fast = 1;
+opts.imageSize = [248, 248] ;
+opts.border = [8, 8] ;
+opts.bord=[0,0,0,0];
+
+<span class="comment">% Heatmap settings</span>
+opts.heatmap=1;
+opts.bodyHeatmap=0; <span class="comment">%body heatmap</span>
+opts.trf=trf;
+opts.sigma=1.3;
+opts.HeatMapSize=[62, 62];
+opts.rotate=1;<span class="comment">%rotation flag</span>
+opts.scale=1;<span class="comment">%scale augm.</span>
+
+<span class="comment">% Occluded keypoints</span>
+opts.inOcclud=1;
+
+<span class="comment">% Multiple instances</span>
+opts.multipInst=1;
+
+<span class="comment">% Heatmap scheme</span>
+opts.HeatMapScheme=1;
+
+opts.train.momentum=0.95;
+
+opts.negHeat=0;<span class="comment">%set to 1 to include negative values for the occlusion</span>
+opts.ignoreOcc=1;<span class="comment">%set to 1 to include negative values for the occlusion</span>
+opts.ignoreRest=1; <span class="comment">%quasi single human training</span>
+
+opts.magnif=12;<span class="comment">%amplifier</span>
+opts.facX=0.15;<span class="comment">%pairwise heatmap width (def. 0.15)</span>
+opts.facY=0.08;<span class="comment">%pairwise heatmap height</span>
+</pre><h2>Heatmap Regressor<a name="8"></a></h2><p>After defining all parameters, build the image database and start training.</p><pre class="codeinput">cnn_regressor_dag(opts);
+</pre><h2>Different Example<a name="9"></a></h2><p>It is possible to train a different example by:</p><div><ol><li>Keeping the network architecture the same. A different architecture would require additional changes in the current script.</li><li>The file <b>flipKeyPointsCoords.m</b> has to be updated. This file includes the mapping of the keypoints in case of flip augmentation. In addition, the flip flag <b>opts.flipFlg</b> has to be updated with resepct to the new addition in the <b>flipKeyPointsCoords.m</b>.</li></ol></div><h2>Contact and Support<a name="10"></a></h2><p>For further questions and support, please contact Vasileios Belagiannis (<a href="mailto:vb@robots.ox.ac.uk">vb@robots.ox.ac.uk</a>).</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Keypoints detection in Human Pose Estimation
+% This example demonstrates how to train and test a ConvNet to detect body
+% keypoints from a single image. It is assumed that the individual is roughly
+% localized.
+%
+% There is a demo code at *examples/testModel.m* for testing a
+% pretrained model for 2D human pose estimation. In addition, there are a
+% few testing examples at the folder *examples/img*. To run the demo,
+% execute the scrpit *examples/testModel.m*. The pretrained model is an
+% implmentation of the Fusion network from Pfister et al.
+% (http://arxiv.org/abs/1506.02897, ICCV2015).
+%
+% To train a model, the main execution scrpit is *examples/trainModel.m*.
+% One should first download the traind and validation data (link will be
+% provided soon) and then compile MatConvNet. MatConvNet is already included
+% in this project. Instructions for compiling the library can be found 
+% <http://www.vlfeat.org/matconvnet/install/#compiling here>. It is highly
+% recommended to compile the library with the support of GPU (cuda and cudnn).
+% For example, compiling the library with the support of the aforementioned
+% functionalities can be done with the command:
+%
+% vl_compilenn('enableGpu', true, 'cudaMethod', 'nvcc', 'EnableImreadJpeg', true, 'cudaRoot', '/usr/local/cuda-7.5', 'enableCudnn', true, 'cudnnRoot', '/home/vb/code/cudnn-v4'); 
+%
+% To run the command, you should incidate the filepath of *cudaRoot* and
+% *cudnnRoot*. Moreover, the function *vl_compilenn()* is inside the folder *matlab*.
+%
+%% Dataset
+% Training and validation data will be available soon. 
+%
+% Check the structure of the traind and validation files (*dataset/Train.mat* 
+% and *dataset/Validation.mat*) to see the ground-truth format.
+% The *2D coordinates* and the keypoints *visibility* are provided for each sample.
+% When there is ground-truth for multiple individuals, it is store in the
+% third dimension (e.g. ground-truth for 3 individuals will be stores in a
+% 16x3x3 tensor).
+%
+% Storage files:
+%
+% # After downloading the train and validation files, update the
+% *opts.DataMatTrain* and *opts.DataMatVal* variables with the files (e.g.
+% lsp_dataset/Train.mat and lsp_dataset/Validation.mat).
+% # When executing the main script, the train and validation files will be loaded to generate
+% the image database. Specify where to store the image database in
+% *opts.imdbPath* in advance (the default path is the *lsp_dataset* folder).
+% # The directory to export the learned model should be provided in
+% *opts.expDir* (the default path is the *lsp_dataset/model* folder).
+% Notice that a learned model is stored at the end of every
+% epoch. This means that restarting the training from scratch requires to
+% empty the *opts.expDir* folder from previously store files.
+%
+% When the data is dowloaded and preprocessed, training a model can start by
+% executing *examples/trainModel.m*.
+%
+% The rest of the documentation describes the main training script
+% (*examples/trainModel.m*.).
+
+%% Setup matconvnet
+clearvars; close all; clc;
+addpath('utils');
+run(fullfile(fileparts(mfilename('fullpath')),...
+  '..', 'matlab', 'vl_setupnn.m')) ;
+
+%% Storage Directories
+
+% Train / Validation files (downloaded files)
+opts.DataMatTrain='dataset/Train.mat';
+opts.DataMatVal='dataset/Validation.mat';
+
+% Export folder
+opts.expDir = 'dataset/model';
+
+% Image database file (it is generated at the beginning of the training)
+opts.imdbPath = 'dataset/imdb.mat';
+
+%% Parameters (adjustable)
+% This parameters can be changed, although it is not recommended for this example. 
+
+% Dataset name (used only for naming - not important)
+opts.datas='Key'; 
+
+% Input to the network (different from input image)
+opts.patchHei=248; 
+opts.patchWi=248;
+
+% Imporant parameter for data augmentation (flip), extra clarification follows next.
+opts.flipFlg='mpi';
+
+% Batch size (should change only in case of memory problems)
+opts.batchSize = 20; 
+
+% Compensates for small batch size(if batchSize=10, then set to 2)
+opts.numSubBatches = 1;
+
+% Number of training epochs (after 30 epochs, it could be stopped)
+opts.numEpochs = 30 ; 
+
+% Learning rate (e.g. 20 epochs 10^-5, then 30 epochs 10^-6 - it is not recommended to change it)
+opts.learningRate = [0.00001*ones(1, 20) 0.000001*ones(1, 30)] ;
+
+%GPU index (if empy, CPU training)
+opts.gpus = [1];
+
+%% Parameters (fixed)
+opts.useBnorm = false;
+opts.bord=[];
+opts.NoAug=1; %used for calling the proper imdb creation function
+opts.prefetch = false ;
+opts.outNode=16;%if heatmaps loss, then number of heatmaps
+opts.inNode=3;
+opts.lossFunc='l2loss-heatmap';
+opts.batchNormalization = 1;%useful for big networks
+
+%% Build the network
+% The network is build separately.
+% It's imporant to specify correctly the number of heatmaps (i.e.
+% keypoints). This is done with *opts.outNode*.
+% In this example, it is fixed to 16 heatmaps - keipoints.
+net = initializeSpatialFusionNetwork(opts);
+
+%% More parameters (fixed)
+
+% Objectives for backpropagation
+opts.derOutputs = {'objective', 1,'objective2', 1};
+
+% Transformation to go from the input image to the heatmap space (only scale transformation, not to be changed) 
+trf=[0.25 0 0 ; 0 0.25 0; 0 0 1];
+
+% Parameters for the train scrpit
+opts.net=net;
+opts.numThreads = 15;
+opts.transformation = 'f25' ;
+opts.averageImage = single(repmat(128,1,1,opts.inNode));
+opts.fast = 1;
+opts.imageSize = [248, 248] ;
+opts.border = [8, 8] ;
+opts.bord=[0,0,0,0];
+
+% Heatmap settings
+opts.heatmap=1;
+opts.bodyHeatmap=0; %body heatmap
+opts.trf=trf;
+opts.sigma=1.3;
+opts.HeatMapSize=[62, 62];
+opts.rotate=1;%rotation flag
+opts.scale=1;%scale augm.
+
+% Occluded keypoints
+opts.inOcclud=1;
+
+% Multiple instances
+opts.multipInst=1;
+
+% Heatmap scheme
+opts.HeatMapScheme=1;
+
+opts.train.momentum=0.95;
+
+opts.negHeat=0;%set to 1 to include negative values for the occlusion
+opts.ignoreOcc=1;%set to 1 to include negative values for the occlusion
+opts.ignoreRest=1; %quasi single human training
+
+opts.magnif=12;%amplifier
+opts.facX=0.15;%pairwise heatmap width (def. 0.15)
+opts.facY=0.08;%pairwise heatmap height
+
+%% Heatmap Regressor
+% After defining all parameters, build the image database and start training.
+cnn_regressor_dag(opts);
+
+%% Different Example
+% It is possible to train a different example by:
+%
+% # Keeping the network architecture the same. A different architecture
+% would require additional changes in the current script.
+% # The file *flipKeyPointsCoords.m* has to be updated. This file includes
+% the mapping of the keypoints in case of flip augmentation.
+% In addition, the flip flag *opts.flipFlg* has to be
+% updated with resepct to the new addition in the *flipKeyPointsCoords.m*.
+
+%% Contact and Support
+% For further questions and support, please contact
+% Vasileios Belagiannis (vb@robots.ox.ac.uk).
+##### SOURCE END #####
+--></body></html>
