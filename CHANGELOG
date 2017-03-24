@@ -1,4 +1,6 @@
 keypoint-v1 : Initial model file (epoch 30) [July 14, 2016] 
 keypoint-v2 : Recurret model as described in https://arxiv.org/abs/1605.02914 [Aug. 18, 2016]
+keypoint-v3 : Recurret model with 2 iterations as described in http://www.robots.ox.ac.uk/~vgg/publications/2017/Belagiannis17/ [March. 23, 2017]
+keypoint-v4 : Recurret model with 2 iterations (trained on MSCOCO, then fined-tuned in MPII Pose as described in http://www.robots.ox.ac.uk/~vgg/publications/2017/Belagiannis17/ [March. 23, 2017]
 
 All the old model files can be downloaded from https://gitlab.com/vggdemo/keypoint_data
