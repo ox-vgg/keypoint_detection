@@ -29,7 +29,7 @@ opts.derOutputs = {'objective1', 1,'objective2', 1, 'objective4', 1,'objective5'
 ```
 
 ### Run Demo
- 1. Download a [pre-trained model](https://gitlab.com/vggdemo/keypoint_matlab_demo/repository/archive.zip?ref=master) if you haven't trained one.
+ 1. Download a [pre-trained model](https://github.com/ox-vgg/keypoint_models/tree/master/models) if you haven't trained one.
  2. Execute **demo_keypoint.m**. 
 
 ### Run Live Demo
