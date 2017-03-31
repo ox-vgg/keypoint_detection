@@ -41,7 +41,7 @@ You need to have the **Web-Camera** package installed and set the path to it.
 ## Citation
 
     @inproceedings{Belagiannis17,
-            title={Deeper depth prediction with fully convolutional residual networks},
+            title={Recurrent Human Pose Estimation},
             author={Belagiannis, Vasileios and Zisserman, Andrew},
             booktitle={International Conference on Automatic Face and Gesture Recognition},
             year={2017},
