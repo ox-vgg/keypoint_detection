@@ -21,7 +21,8 @@ classdef RegLoss < dagnn.ElementWise
     
     methods
         function outputs = forward(obj, inputs, params)
-            outputs{1} = vl_nnheatloss(inputs{1}, inputs{2}, [], 'loss', obj.loss, 'ignOcc', obj.ignOcc);
+            outputs{1} = vl_nnheatmaploss(inputs{1}, inputs{2}, [], ...
+                             'loss', obj.loss, 'ignOcc', obj.ignOcc) ;
             
             n = obj.numAveraged ;
             m = n + size(inputs{1},4) ;
@@ -30,7 +31,8 @@ classdef RegLoss < dagnn.ElementWise
         end
         
         function [derInputs, derParams] = backward(obj, inputs, params, derOutputs)
-            derInputs{1} = vl_nnheatloss(inputs{1}, inputs{2}, derOutputs{1}, 'loss', obj.loss, 'ignOcc', obj.ignOcc);
+            derInputs{1} = vl_nnheatmaploss(inputs{1}, inputs{2}, ...
+                    derOutputs{1}, 'loss', obj.loss, 'ignOcc', obj.ignOcc);
             derInputs{2} = [] ;
             derParams = {} ;
         end
