@@ -1,52 +1,29 @@
 classdef KeyPointDetector<handle
+
     properties
-        norm_img_size = [248, 248];
-        net_output_size = [62, 62];
-        keypoint_names  = {'Right Ankle', 'Right Knee', 'Right Hip', 'Left Hip', 'Left Knee', ...
-            'Left Ankle', 'Torso', 'Neck', 'Lower Head', 'Upper Head', 'Right Wirst', ...
-            'Right Elbow', 'Right Shoulder', 'Left Shoulder', 'Left Elbow', 'Left Wirst'};
-        gpu_id = -1;
-        scales = [];
-        
-        % supporting libraries
-        matconvnet_dir = '';
-        
-        % Model
-        model_name = 'keypoint_detector'
-        model_fn = '';
-        net = [];
-        model_version = '';
+      net = [] ;
+      gpu_id = -1 ;
+      scales = [] ;
+      model_version = '';
+      model_name = 'keypoint_detector'
+      norm_img_size = [248, 248];
+      net_output_size = [62, 62];
+      keypoint_names  = {'Right Ankle', 'Right Knee', 'Right Hip', ...
+                         'Left Hip', 'Left Knee','Left Ankle', 'Torso', ...
+                         'Neck', 'Lower Head', 'Upper Head', 'Right Wirst', ...
+                         'Right Elbow', 'Right Shoulder', 'Left Shoulder', ...
+                         'Left Elbow', 'Left Wirst'};
     end
     
     methods
         
-        function obj=KeyPointDetector(model_fn, matconvnet_dir, gpu_id, sc)
-            obj.model_fn = model_fn;
-            obj.matconvnet_dir = matconvnet_dir;
-            obj.gpu_id = gpu_id;
-            
-            % extract version number from model filename
-            ver_match = regexp(model_fn, 'v\d+.mat', 'match');
-            if length(ver_match) == 1
-                obj.model_version = ver_match{1}(2:end-4);
-            else
-                obj.model_version = 'NA';
-            end
-            
-            % load matconvnet into environment
-            matconvnet_setup_fn = fullfile(matconvnet_dir, 'matlab', 'vl_setupnn.m');
-            run(matconvnet_setup_fn);
-            
-            % Load model
-            load(model_fn);
-            obj.net = dagnn.DagNN.loadobj(net) ;
-            
-            % move the model to gpu
-            if ( obj.gpu_id ~= 0 )
-                gpuDevice(gpu_id);
-                obj.net.move('gpu');
-            end
-            
+        function obj = KeyPointDetector(model_name, gpu_id)
+          % initialise detector: load model and configure options
+          obj.net = keypoint_model_zoo(model_name) ;
+          tokens = regexp(model_name, '-v([\d+])$', 'tokens') ;
+          if ~isempty(tokens), ver = tokens{1} ; else, ver = 'NA' ; end
+          obj.model_version = ver ; obj.gpu_id = gpu_id ;
+          if (gpu_id ~= 0), gpuDevice(gpu_id) ; obj.net.move('gpu') ; end
         end
         
         function [kpx, kpy, kpname] = get_all_keypoints(obj, img_fn)
