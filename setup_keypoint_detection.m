@@ -4,4 +4,4 @@ function setup_keypoint_detection()
 
   root = fileparts(mfilename('fullpath')) ;
   addpath(root, [root '/model-train'], [root '/dagnetworks']) ;
-  addpath([root '/core']) ;
+  addpath([root '/core'], [root '/getMPIIData']) ;
